@@ -5,7 +5,7 @@ const cors = require('cors');
 const app = express();
 
 // Configure CORS to allow requests from your frontend
-app.use(cors({ origin: 'https://check-front.vercel.app' }));
+app.use(cors({ origin: 'https://check-back.vercel.app' }));
 app.use(express.json());
 
 // MongoDB connection using environment variables
