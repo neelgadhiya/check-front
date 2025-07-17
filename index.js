@@ -45,6 +45,7 @@ app.post('/api/users', async (req, res) => {
 app.get('/api/users', async (req, res) => {
   try {
     const users = await User.find();
+    console.log(users)
     res.json(users);
   } catch (error) {
     console.error('Error fetching users:', error);
