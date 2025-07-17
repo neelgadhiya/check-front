@@ -20,7 +20,7 @@ const userSchema = new mongoose.Schema({
 const User = mongoose.model('User', userSchema);
 
 // API to add a user
-app.post('/api/users', async (req, res) => {
+app.post('https://check-front.vercel.app/api/users', async (req, res) => {
   try {
     const { name } = req.body;
     const user = new User({ name });
@@ -32,7 +32,7 @@ app.post('/api/users', async (req, res) => {
 });
 
 // API to get all users
-app.get('/api/users', async (req, res) => {
+app.get('https://check-front.vercel.app/api/users', async (req, res) => {
   try {
     const users = await User.find();
     res.json(users);
