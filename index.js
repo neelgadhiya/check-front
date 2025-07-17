@@ -1,81 +1,46 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
 
-function App() {
-  const [name, setName] = useState('');
-  const [users, setUsers] = useState([]); // Ensure initial state is an array
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+const app = express();
+app.use(cors());
+app.use(express.json());
 
-  // Backend API URL (replace with your actual backend URL)
-  const API_URL = process.env.REACT_APP_API_URL || 'https://check-front.vercel.app/api/users';
+// MongoDB connection
+mongoose.connect('mongodb+srv://admin:neel@vericluster.tiod2hf.mongodb.net/?retryWrites=true&w=majority&appName=VeriCluster', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
 
-  // Fetch users on component mount
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+// User Schema
+const userSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+});
 
-  const fetchUsers = async () => {
-    try {
-      const response = await axios.get(API_URL);
-      // Ensure response.data is an array; if not, set empty array
-      setUsers(Array.isArray(response.data) ? response.data : []);
-      setError('');
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      setError('Failed to fetch users. Please try again later.');
-      setUsers([]); // Reset to empty array on error
-    }
-  };
+const User = mongoose.model('User', userSchema);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!name.trim()) {
-      setError('Please enter a valid name.');
-      return;
-    }
-    try {
-      await axios.post(API_URL, { name });
-      setName('');
-      setError('');
-      setSuccess('User added successfully!');
-      fetchUsers(); // Refresh user list
-      setTimeout(() => setSuccess(''), 3000);
-    } catch (error) {
-      console.error('Error adding user:', error);
-      setError('Failed to add user. Please try again.');
-    }
-  };
+// API to add a user
+app.post('/api/users', async (req, res) => {
+  try {
+    const { name } = req.body;
+    const user = new User({ name });
+    await user.save();
+    res.status(201).json({ message: 'User added', user });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to add user' });
+  }
+});
 
-  return (
-    <div style={{ padding: '20px', maxWidth: '600px', margin: '0 auto' }}>
-      <h1>Add User</h1>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      {success && <p style={{ color: 'green' }}>{success}</p>}
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Enter user name"
-          style={{ padding: '8px', marginRight: '10px', width: '200px' }}
-        />
-        <button type="submit" style={{ padding: '8px 16px' }}>
-          Add User
-        </button>
-      </form>
-      <h2>Users ({users.length})</h2>
-      <ul>
-        {Array.isArray(users) ? (
-          users.map((user) => (
-            <li key={user._id}>{user.name}</li>
-          ))
-        ) : (
-          <li>No users available</li>
-        )}
-      </ul>
-    </div>
-  );
-}
+// API to get all users
+app.get('/api/users', async (req, res) => {
+  try {
+    const users = await User.find();
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
 
-export default App;
+// Start server
+const PORT = 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
