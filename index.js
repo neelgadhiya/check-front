@@ -42,5 +42,5 @@ app.get('/api/users', async (req, res) => {
 });
 
 // Start server
-const PORT = 5000;
+const PORT = 'https://check-front.vercel.app/';
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
