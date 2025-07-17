@@ -3,13 +3,17 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 
 const app = express();
-app.use(cors());
+app.use(cors({ origin: 'https://check-front.vercel.app' }));
 app.use(express.json());
 
 // MongoDB connection
 mongoose.connect('mongodb+srv://admin:neel@vericluster.tiod2hf.mongodb.net/?retryWrites=true&w=majority&appName=VeriCluster', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
+}).then(() => {
+  console.log('Connected to MongoDB');
+}).catch((error) => {
+  console.error('MongoDB connection error:', error);
 });
 
 // User Schema
@@ -42,5 +46,5 @@ app.get('/api/users', async (req, res) => {
 });
 
 // Start server
-const PORT = 'https://check-front.vercel.app/';
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
