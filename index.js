@@ -1,48 +1,56 @@
-// api/users.js
+const express = require('express');
 const mongoose = require('mongoose');
+const cors = require('cors');
 
-let conn = null;
+const app = express();
 
-// Connect to MongoDB Atlas only once (reuse connection)
-async function connectToDatabase() {
-  if (conn == null) {
-    conn = await mongoose.connect(
-      'mongodb+srv://admin:neel@vericluster.tiod2hf.mongodb.net/?retryWrites=true&w=majority&appName=VeriCluster',
-      {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      }
-    );
-  }
-  return conn;
-}
+// Configure CORS to allow requests from your frontend
+app.use(cors({ origin: 'https://check-front.vercel.app' }));
+app.use(express.json());
 
-// Define schema
+// MongoDB connection using environment variables
+const mongoUri = process.env.MONGO_URI || 'mongodb+srv://admin:neel@vericluster.tiod2hf.mongodb.net/?retryWrites=true&w=majority&appName=VeriCluster';
+
+mongoose.connect(mongoUri, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+  .then(() => console.log('Connected to MongoDB'))
+  .catch((err) => console.error('MongoDB connection error:', err));
+
+// User Schema
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
 });
 
-// Avoid model overwrite on re-import
-const User = mongoose.models.User || mongoose.model('User', userSchema);
+const User = mongoose.model('User', userSchema);
 
-// Serverless API function
-export default async function handler(req, res) {
-  await connectToDatabase();
-
-  if (req.method === 'POST') {
+// API to add a user
+app.post('/api/users', async (req, res) => {
+  try {
     const { name } = req.body;
-    if (!name) return res.status(400).json({ error: 'Name is required' });
-
+    if (!name) {
+      return res.status(400).json({ error: 'Name is required' });
+    }
     const user = new User({ name });
     await user.save();
-    return res.status(201).json({ message: 'User added', user });
+    res.status(201).json({ message: 'User added', user });
+  } catch (error) {
+    console.error('Error adding user:', error);
+    res.status(500).json({ error: 'Failed to add user' });
   }
+});
 
-  if (req.method === 'GET') {
+// API to get all users
+app.get('/api/users', async (req, res) => {
+  try {
     const users = await User.find();
-    return res.status(200).json(users);
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ error: 'Failed to fetch users' });
   }
+});
 
-  res.setHeader('Allow', ['GET', 'POST']);
-  res.status(405).end(`Method ${req.method} Not Allowed`);
-}
+// Export the app for Vercel
+module.exports = app;
